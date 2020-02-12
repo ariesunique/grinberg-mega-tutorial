@@ -1,9 +1,9 @@
 from datetime import datetime
-from flask import render_template, flash, redirect, request, url_for
+from flask import g, current_app, render_template, flash, redirect, request, url_for
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
 from app import app, db
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, SearchForm
 from app.models import User, Post
 from app.email import send_password_reset_email
 
@@ -13,6 +13,7 @@ def store_login_time():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
+        g.search_form = SearchForm()
         
         
 @app.route('/', methods=['GET', 'POST'])
@@ -32,6 +33,17 @@ def index():
     prev_url = url_for('index', page=posts.prev_num) if posts.has_prev else None
     return render_template('index.html', title='Home Page', form=form, posts=posts.items, next_url=next_url, prev_url=prev_url)
 
+
+@app.route('/search')
+@login_required
+def search():
+    if not g.search_form.validate():
+        return redirect(url_for('explore'))
+    page = request.args.get('page', 1, type=int)
+    posts, total = Post.search(g.search_form.q.data, page, current_app.config['POSTS_PER_PAGE'])
+    next_url = url_for('search', q=g.search_form.q.data, page=page+1) if total > page * current_app.config['POSTS_PER_PAGE'] else None
+    prev_url = url_for('search', q=g.search_form.q.data, page=page-1) if page > 1 else None
+    return render_template('search.html', title='Search', posts=posts, next_url=next_url, prev_url=prev_url)
 
 @app.route('/profile/<username>')
 def user(username):

@@ -14,3 +14,5 @@ class Config():
     ADMINS = ['admin@company.org']
     
     POSTS_PER_PAGE = 3
+    
+    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
