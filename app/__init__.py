@@ -22,7 +22,7 @@ mail = Mail(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 
-app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) if app.config['ELASTICSEARCH_URL'] else None
+app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']], ca_certs=False,verify_certs=False) if app.config['ELASTICSEARCH_URL'] else None
 
 from app import routes, models, errors
 
